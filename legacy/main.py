@@ -46,7 +46,7 @@ def click_and_crop (event, x, y, flags, param):
 	elif event == cv2.EVENT_LBUTTONUP:
 		(x1, y1), x2, y2 = ref_points[0], x, y
 
-		ref_points[0] = ( min(x1,x2), min(y1,y2) )		
+		ref_points[0] = ( min(x1,x2), min(y1,y2) )
 
 		ref_points.append ( ( max(x1,x2), max(y1,y2) ) )
 

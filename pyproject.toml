@@ -1,0 +1,122 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "speed-detector"
+version = "0.1.0"
+description = "Real-time vehicle speed detection and traffic analytics platform (2026 rewrite)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+    "computer-vision",
+    "yolo",
+    "opencv",
+    "traffic",
+    "speed-detection",
+    "onnx",
+    "real-time",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "typer>=0.12",
+    "pydantic-settings>=2.5",
+    "opencv-python>=4.10",
+    "numpy>=1.26",
+    "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "pre-commit>=3.8",
+]
+
+[project.scripts]
+speed-detector = "speed_detector.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/speed_detector"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE", "PLAN.md", "ARCHITECTURE.md"]
+
+# ---------------------------------------------------------------------------
+# ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RET", "S", "RUF", "PT"]
+ignore = [
+    "S101",   # assert is fine in tests
+    "B008",   # function call in default arg — required by Typer's API
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"legacy/**" = ["ALL"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+no_implicit_optional = true
+plugins = ["pydantic.mypy"]
+exclude = ["legacy/"]
+
+[[tool.mypy.overrides]]
+module = ["cv2.*", "numpy.*"]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_undefined = true
+
+# ---------------------------------------------------------------------------
+# pytest / coverage
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --cov=speed_detector --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/speed_detector"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,54 @@
+"""Phase 1 smoke tests — keep CI green while the skeleton is fleshed out."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+from typer.testing import CliRunner
+
+from speed_detector import __version__
+from speed_detector.cli import app
+from speed_detector.config import Settings
+from speed_detector.pipeline.source import FileSource
+from speed_detector.types import BBox, Detection, VehicleClass
+
+runner = CliRunner()
+
+
+def test_version() -> None:
+    assert __version__ == "0.1.0"
+
+
+def test_settings_defaults() -> None:
+    settings = Settings()
+    assert settings.detector_backend == "onnx"
+    assert settings.tracker == "bytetrack"
+    assert settings.stream_max_fps == 15
+
+
+def test_types_construct() -> None:
+    bbox = BBox(x=1.0, y=2.0, w=3.0, h=4.0)
+    detection = Detection(bbox=bbox, confidence=0.9, cls=VehicleClass.CAR)
+    assert detection.cls == VehicleClass.CAR
+    assert detection.confidence == pytest.approx(0.9)
+
+
+def test_cli_help() -> None:
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "run" in result.output
+
+
+def test_filesource_reads_synthetic_video(synthetic_video: Path) -> None:
+    source = FileSource(str(synthetic_video))
+    assert source.frame_size == (64, 48)
+    frames = list(source)
+    assert len(frames) == 4
+    assert frames[0].shape == (48, 64, 3)
+
+
+def test_cli_run_on_synthetic_video(synthetic_video: Path) -> None:
+    result = runner.invoke(app, ["run", str(synthetic_video)])
+    assert result.exit_code == 0
+    assert "64x48" in result.output

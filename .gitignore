@@ -1,3 +1,57 @@
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+wheels/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# NOTE: uv.lock is committed on purpose — reproducibility is a feature.
+
+# --- Testing / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+
+# --- Type / lint caches ---
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Project artifacts ---
+/data/
+/models/*.onnx
+/models/*.pt
+/models/*.engine
+*.mp4
+!samples/*.mp4
+.env
+
+# --- Frontend (Phase 3+) ---
+web/node_modules/
+web/dist/
+web/.vite/

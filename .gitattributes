@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the repo, regardless of platform checkout.
+# This keeps `pre-commit`'s mixed-line-ending hook from ever thrashing.
+* text=auto eol=lf
+
+# --- Binaries (never normalize, never diff as text) ---
+*.gif binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.mp4 binary
+*.mov binary
+*.avi binary
+*.onnx binary
+*.pt binary
+*.engine binary
+*.sqlite binary
+*.db binary

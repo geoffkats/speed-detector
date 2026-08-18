@@ -1,51 +1,60 @@
-# Python/OpenCV Speed Detector #
+# Speed Detector
 
-This is a program that uses OpenCV to calculate cars' speeds from a traffic cam livestream.
+> Real-time vehicle speed detection and traffic analytics platform — a 2026
+> ground-up rewrite of a 2019 OpenCV/KNN speed detector.
 
-### How it works ###
+A modern, CPU-deployable traffic-vision platform: YOLO detection, ByteTrack
+tracking, perspective-transform calibration for **real-world** speeds (mph/kph,
+not pixel heuristics), a FastAPI + React dashboard, Docker, and CI.
 
-This demo gif will be referenced multiple times in the explanation, so I'll just leave it here.
+## Status
 
-![Example](./demo.gif)
+🚧 Under active development. The blueprint lives in
+[PLAN.md](./PLAN.md) (roadmap) and [ARCHITECTURE.md](./ARCHITECTURE.md)
+(technical design).
 
-#### Cropping ####
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1 | Foundation: packaging, lint, types, tests, CI | 🚧 in progress |
+| 2 | Modern CV pipeline: YOLO + ByteTrack + calibration | ⏳ pending |
+| 3 | Web dashboard & API | ⏳ pending |
+| 4 | Production hardening: Docker, multi-camera, observability | ⏳ pending |
+| 5 | Futuristic differentiators: lane seg, anomaly, privacy, LLM | ⏳ pending |
 
-The first thing my program does to the video is crop out any unnecessary areas. In the gif below, the black box is blocking out a part of the screen that has motion but shouldn't be part of our detection. These cropped regions can be manually selected at runtime (click and drag on the "Source Image" window) and are saved in `settings.json` (when 's' key is pressed). Saved regions are cropped out on startup.
+## Quickstart
 
-#### Vehicle Detection ####
+```bash
+git clone <repo>
+cd speed-detector
+uv sync --extra dev          # creates .venv + installs Python 3.12 via uv
+uv run speed-detector --help
+uv run speed-detector run path/to/video.mp4   # Phase 1: prints frame shape + FPS
+```
 
-Now that the unwanted areas are removed, we can use computer vision to isolate the vehicles (after all, that's what we really care about!). 
+Run the checks locally:
 
-I use KNN background subtraction and morphology to isolate the vehicles and detect their contours. I'm not going to explain too much since these are default OpenCV functions, but you can see how I use them in the first part of `process_frame()` and `filter_mask()` in `main.py`.
+```bash
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy src
+uv run pytest -v
+```
 
-#### Vehicle Tracking ####
+## Tech stack
 
-To find a car's speed, we need to know how its moving from frame to frame. We can already detect cars on any given frame, but we need a kind of permanence to detect as the move in the video. This is a rather long process, but in general we compare the current detections to the previous detections, and based on manually set parameters, we determine whether or not the new detections are valid movements. The StackOverflow post in the credits goes does a much better job of explaining this.
+- **Python 3.12**, **uv**, **hatchling** — reproducible from clone
+- **YOLOv11n** (Ultralytics) for dev; **ONNX Runtime** for production inference
+- **ByteTrack** multi-object tracking
+- **FastAPI** + **Vite/React/TypeScript** dashboard
+- **SQLite** + **DuckDB** analytics; **ruff** / **mypy** / **pytest**; **Docker**; **GitHub Actions**
 
-#### Speed Calculation ####
+## Legacy
 
-This program has two methods of detecting speed: *distance mode* and *average mode*.
+The original 2019 implementation (KNN background subtraction, hand-rolled
+centroid tracking, dead Caltrans stream URLs) is preserved in
+[`legacy/`](./legacy/) for reference. It is **not** imported by the new
+`speed_detector` package.
 
-*Distance mode* will takes in a preset "distance" value (how long the road in the video is). The program uses this value and the vehicle's time on screen to calculate its speed.
+## License
 
-*Average mode* samples a certain number of vehicles to find there average speed on screen (in pixels). Subsequent cars are compared to the average, and their speeds are reported as percent differences from the average. This mode is useful when you don't know the distance of the road in the video, so it can be applied to almost any road. The demo gif is calculating speed in average mode.
-
-It's important to note that speed is calculated once a vehicle passes the light blue line (again, see the demo gif). The position and angle (i.e. horizontal/vertical) can be customized for different roads/video sources.
-
-#### Settings ####
-
-I designed this program so that it could work on virtually any video source.
-
-`settings.json` stores settings for each individual video source (I call them "roads" in my program). A few examples include the positon of the detection line, the url of the video source, and the cropped out regions. Of course, you can look at `settings.json` to see how I actually store these values.
-
-### Improvements ###
-
-While my program works decently well, there are some things I'd like to work on, namely:
-* A manual livestream loader to reduce lag/random jumps (it would need to be manual because it needs to access [.m3u8 metadata](https://tools.ietf.org/html/rfc8216#section-4.3))
-* Lane detection so that this program could work on multi-lane roads
-
-### Credits ###
-
-This [incredible StackOverflow post](https://stackoverflow.com/questions/36254452/counting-cars-opencv-python-issue/36274515#36274515), which largely inspired me to redo this project in the first place.
-
-The [livestreams](http://dot.ca.gov/d3/cameras.html) are provided by the California Department of Transportation
+MIT — see [LICENSE](./LICENSE).

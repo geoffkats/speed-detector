@@ -8,7 +8,7 @@ import numpy as np
 class Vehicle (object):
 	def __init__ (self, carid, position, start_frame):
 		self.id = carid
-		
+
 		self.positions = [position]
 		self.frames_since_seen = 0
 		self.counted = False
@@ -22,7 +22,7 @@ class Vehicle (object):
 	@property
 	def last_position (self):
 		return self.positions[-1]
-	
+
 	def add_position (self, new_position):
 		self.positions.append(new_position)
 		self.frames_since_seen = 0
@@ -150,7 +150,7 @@ class VehicleCounter (object):
 		# TODO: IMPORTANT: the bug of multiple little tracks on the same vehicle FIX THIS RONIT GODDAMN IT!!!
 		for match in matches:
 			contour, centroid = match
-			
+
 			# skip_this = False
 
 			# for v in self.vehicles:
@@ -181,13 +181,13 @@ class VehicleCounter (object):
 					vehicle.speed = self.distance / time_alive
 
 					# print(self.distance, time_alive)
-				
+
 				else:
 					# Average mode
 					distance = self.get_vector(vehicle.last_position, vehicle.positions[0])[0] # We don't need the angle
 
 					speed = distance / (frame_number - vehicle.start_frame)
-					print(f"SPEED: {speed}")		
+					print(f"SPEED: {speed}")
 
 					if len(self.samples) < self.sample_num:
 						# Add to samples
