@@ -1,11 +1,10 @@
-"""Video source abstraction — RTSP, file, USB, YouTube.
+"""Video source abstraction — file, RTSP, USB webcam.
 
-Phase 1 implements :class:`FileSource` as the hello-world ingestion path.
-``RTSPSource``, ``WebcamSource``, and ``YouTubeSource`` arrive in Phase 2.
-
-The threaded drop-on-overflow buffer described in ``ARCHITECTURE.md §5.1``
-arrives in Phase 4; ``FileSource`` reads sequentially for now, which is enough
-to prove the ingestion path works.
+Phase 2 adds :class:`RTSPSource` and :class:`WebcamSource` alongside the
+:class:`FileSource` from Phase 1, plus an :func:`open_source` factory that
+picks the right implementation from a user-supplied string. YouTube ingest
+(via ``yt-dlp``) is deferred to Phase 4; the threaded drop-on-overflow buffer
+described in ``ARCHITECTURE.md §5.1`` also arrives in Phase 4.
 """
 
 from __future__ import annotations
@@ -36,17 +35,26 @@ class VideoSource(Protocol):
         """Release the underlying capture."""
         ...
 
+    def __iter__(self) -> Iterator[np.ndarray]:
+        """Iterate over frames until EOF."""
+        ...
 
-class FileSource:
-    """Read frames sequentially from a video file."""
 
-    def __init__(self, path: str, buffer_size: int = 2) -> None:
-        if not Path(path).is_file():
-            raise FileNotFoundError(f"Video file not found: {path}")
-        self._path = path
-        self._cap = cv2.VideoCapture(path)
+class _CvSource:
+    """Common ``cv2.VideoCapture`` plumbing for file / RTSP / USB sources."""
+
+    def __init__(
+        self,
+        src: str | int,
+        *,
+        buffer_size: int = 1,
+        is_file: bool = False,
+    ) -> None:
+        if is_file and not Path(str(src)).is_file():
+            raise FileNotFoundError(f"Video file not found: {src}")
+        self._cap = cv2.VideoCapture(src)
         if not self._cap.isOpened():
-            raise RuntimeError(f"Could not open video file: {path}")
+            raise RuntimeError(f"Could not open video source: {src}")
         self._cap.set(cv2.CAP_PROP_BUFFERSIZE, buffer_size)
         self._width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self._height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -69,3 +77,34 @@ class FileSource:
         while (frame := self.next_frame()) is not None:
             yield frame
         self.close()
+
+
+class FileSource(_CvSource):
+    """Read frames sequentially from a video file."""
+
+    def __init__(self, path: str, buffer_size: int = 2) -> None:
+        super().__init__(path, buffer_size=buffer_size, is_file=True)
+
+
+class RTSPSource(_CvSource):
+    """Read frames from an RTSP/RTMP/HTTP stream."""
+
+    def __init__(self, url: str, buffer_size: int = 1) -> None:
+        super().__init__(url, buffer_size=buffer_size, is_file=False)
+
+
+class WebcamSource(_CvSource):
+    """Read frames from a local USB webcam."""
+
+    def __init__(self, index: int = 0, buffer_size: int = 1) -> None:
+        super().__init__(index, buffer_size=buffer_size, is_file=False)
+
+
+def open_source(spec: str) -> VideoSource:
+    """Pick the right source implementation from a user-supplied string."""
+    lowered = spec.lower()
+    if lowered.startswith(("rtsp://", "rtmp://", "http://", "https://")):
+        return RTSPSource(spec)
+    if spec.isdigit():
+        return WebcamSource(int(spec))
+    return FileSource(spec)

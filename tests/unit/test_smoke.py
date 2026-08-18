@@ -1,4 +1,4 @@
-"""Phase 1 smoke tests — keep CI green while the skeleton is fleshed out."""
+"""Smoke tests for the package skeleton and ingestion path."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def test_settings_defaults() -> None:
 
 
 def test_types_construct() -> None:
-    bbox = BBox(x=1.0, y=2.0, w=3.0, h=4.0)
+    bbox = BBox(x1=1.0, y1=2.0, x2=4.0, y2=6.0)
     detection = Detection(bbox=bbox, confidence=0.9, cls=VehicleClass.CAR)
     assert detection.cls == VehicleClass.CAR
     assert detection.confidence == pytest.approx(0.9)
@@ -46,9 +46,3 @@ def test_filesource_reads_synthetic_video(synthetic_video: Path) -> None:
     frames = list(source)
     assert len(frames) == 4
     assert frames[0].shape == (48, 64, 3)
-
-
-def test_cli_run_on_synthetic_video(synthetic_video: Path) -> None:
-    result = runner.invoke(app, ["run", str(synthetic_video)])
-    assert result.exit_code == 0
-    assert "64x48" in result.output

@@ -37,6 +37,10 @@ dependencies = [
     "opencv-python>=4.10",
     "numpy>=1.26",
     "structlog>=24.4",
+    # --- Production CV stack (no PyTorch required) ---
+    "onnxruntime>=1.19",
+    "supervision>=0.21",
+    "trackers",
 ]
 
 [project.optional-dependencies]
@@ -46,6 +50,12 @@ dev = [
     "pytest>=8.3",
     "pytest-cov>=5.0",
     "pre-commit>=3.8",
+]
+# Dev path: Ultralytics (PyTorch) for model iteration + ONNX export.
+# Pinned to CPU wheels below so this stays a ~200 MB install, not ~2.5 GB.
+vision = [
+    "ultralytics>=8.3",
+    "onnx>=1.12,<2",  # for `scripts.export_model`; inference uses onnxruntime (core)
 ]
 
 [project.scripts]
@@ -92,8 +102,15 @@ no_implicit_optional = true
 plugins = ["pydantic.mypy"]
 exclude = ["legacy/"]
 
+# supervision/ultralytics ship partial stubs with Optional-heavy fields that
+# fight us; treat them as untyped (names become Any) so the typed boundary is
+# on our own dataclasses, not on third-party objects we don't control.
 [[tool.mypy.overrides]]
-module = ["cv2.*", "numpy.*"]
+module = ["supervision.*", "ultralytics.*", "trackers.*"]
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["cv2.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
@@ -120,3 +137,16 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+# ---------------------------------------------------------------------------
+# uv: pin torch + torchvision to CPU wheels (CPU-first project — see PLAN.md).
+# Keeps `uv sync --extra vision` from pulling the ~2.5 GB CUDA torch wheel.
+# ---------------------------------------------------------------------------
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }

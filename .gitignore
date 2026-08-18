@@ -31,9 +31,10 @@ coverage.xml
 .ruff_cache/
 .pyre/
 
-# --- IDEs ---
+# --- IDEs / tooling ---
 .vscode/
 .idea/
+.qwen/
 *.swp
 *.swo
 *~
@@ -44,11 +45,13 @@ Thumbs.db
 
 # --- Project artifacts ---
 /data/
-/models/*.onnx
-/models/*.pt
-/models/*.engine
+*.onnx
+*.pt
+*.engine
 *.mp4
 !samples/*.mp4
+samples/*.jpg
+samples/*.png
 .env
 
 # --- Frontend (Phase 3+) ---

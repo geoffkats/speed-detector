@@ -3,6 +3,9 @@
 These are the typed boundaries described in ``ARCHITECTURE.md §3``. Frozen
 ``slots=True`` dataclasses make the data flow cheap to copy and impossible to
 mutate by accident — a property the legacy ``VehicleCounter`` lacked.
+
+Note: ``BBox`` uses ``xyxy`` (top-left / bottom-right) to match the convention
+used by Ultralytics and ``supervision`` throughout the CV stack.
 """
 
 from __future__ import annotations
@@ -12,7 +15,7 @@ from enum import IntEnum
 
 
 class VehicleClass(IntEnum):
-    """COCO vehicle classes the detector reports."""
+    """Vehicle categories the detector reports (internal ids, not COCO ids)."""
 
     CAR = 0
     TRUCK = 1
@@ -23,12 +26,12 @@ class VehicleClass(IntEnum):
 
 @dataclass(frozen=True, slots=True)
 class BBox:
-    """Axis-aligned bounding box in pixel coordinates."""
+    """Axis-aligned bounding box in pixel coordinates (xyxy)."""
 
-    x: float
-    y: float
-    w: float
-    h: float
+    x1: float
+    y1: float
+    x2: float
+    y2: float
 
 
 @dataclass(frozen=True, slots=True)
